@@ -1,0 +1,61 @@
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from bs4 import BeautifulSoup
+import requests as r
+
+def soup(url, apt): #this code finds the checkout page for a given restauarant
+
+    page = r.get(url)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    #print(soup.prettify()) #this is more for development purposes to see how the html is laid out
+
+    avail_apts = soup.find_all("a", {"class": "time-slots__slot"}) #finds which times are available
+    for a in avail_apts:
+        possible_options = str((a.div).text)
+        if possible_options.find(apt + " PM") != -1: #test whether my desire time is available
+            mini_url = "https://m.opentable.com/" #OpenTable changes the URL, so I have to modify the Url
+            target = mini_url + str((a['href'])) #booking url
+            print(target + "is available")
+
+    return target #returns checkout url
+
+def checkout(url): #this actually books the reservation once a time is found
+
+    driver = webdriver.Chrome()  # Optional argument, if not specified will search path.
+    driver.get(url);
+
+    elem = driver.find_element_by_xpath("//*[@id='wrapper']/div/form/div[1]/section/div[1]/input")
+    elem.clear()
+    elem.send_keys("Robert")
+
+    elem = driver.find_element_by_xpath("//*[@id='wrapper']/div/form/div[1]/section/div[3]/input")
+    elem.clear()
+    elem.send_keys("Futyma")
+
+    elem = driver.find_element_by_xpath("//*[@id='wrapper']/div/form/div[1]/section/div[5]/input")
+    elem.clear()
+    elem.send_keys("rfutyma@gmail.com")
+
+
+    elem = driver.find_element_by_xpath("//*[@id='wrapper']/div/form/div[1]/section/div[7]/input")
+    elem.clear()
+    elem.send_keys("4802082125")
+
+    # elem = driver.find_element_by_xpath("//*[@id='wrapper']/div/form/div[2]/button")
+    # elem.click()
+
+    time.sleep(30) # Let the user actually see something!
+    #driver.quit()
+
+    #return driver
+
+def main():
+    url = r"https://m.opentable.com/r/buenos-aires-grill-seattle?" #enter the url of the website you want
+    apt = "9:00" #this is the time you want
+
+    info = soup(url, apt) #this code will find the checkout page URL
+    checkout(info) #now that you have the checkout page, the selenium browser will execute the checkout
+
+if __name__ == '__main__':
+    main()
